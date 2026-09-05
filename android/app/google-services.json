@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "891088142161",
+    "project_id": "freelancer-business-os-174aa",
+    "storage_bucket": "freelancer-business-os-174aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891088142161:android:8898bcef09930058971d70",
+        "android_client_info": {
+          "package_name": "com.example.freelancer_business_os"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZO4_hM5dQzDViZ3LRT78waywfbqjhP08"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
