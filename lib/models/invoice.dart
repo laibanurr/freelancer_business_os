@@ -13,7 +13,7 @@ class Invoice {
     required this.status,
     required this.timeEntryIds,
     required this.createdDate,
-    required this.totalAmountInCents
+    required this.totalAmountInCents,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,10 +22,9 @@ class Invoice {
       'projectId': projectId,
       'timeEntryIds': timeEntryIds,
       'invoiceStatus': status.name,
-      'totalAmountInCents' : totalAmountInCents,
-      'createdDate' : createdDate,
+      'totalAmountInCents': totalAmountInCents,
+      'createdDate': createdDate,
     };
-    
   }
 
   factory Invoice.fromMap(Map<String, dynamic> map) {
@@ -34,8 +33,8 @@ class Invoice {
       projectId: map['projectId'] as String,
       status: InvoiceStatus.values.byName(map['invoiceStatus'] as String),
       timeEntryIds: List<String>.from(map['timeEntryIds']),
-      totalAmountInCents:  map['totalAmountInCents'] as int,
-       createdDate:  (map['createdDate'] as Timestamp).toDate(),
+      totalAmountInCents: map['totalAmountInCents'] as int,
+      createdDate: (map['createdDate'] as Timestamp).toDate(),
     );
   }
 }
