@@ -31,6 +31,7 @@ class Project {
     };
   }
 
+
   factory Project.fromMap(Map<String, dynamic> map) {
     return Project(
       clientId: map['clientId'] as String,
@@ -39,7 +40,7 @@ class Project {
       projectStatus: map['projectStatus'] as String,
       rateInCents: map['rateInCents'] as int,
       startDate: (map['startDate'] as Timestamp).toDate(),
-      id: map['id'] as String,
+      id: map['id'] as String
     );
   }
 }
