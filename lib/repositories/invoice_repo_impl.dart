@@ -4,7 +4,7 @@ import 'package:freelancer_business_os/repositories/invoice_repository.dart';
 
 class FirebaseInvoiceRepository implements InvoiceRepository {
   final CollectionReference _invoiceCollection = FirebaseFirestore.instance
-      .collection('invoice');
+      .collection('invoices');
   @override
   Future<void> addInvoice(Invoice invoice) async {
     await _invoiceCollection.add(invoice.toMap());
@@ -36,5 +36,14 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
   @override
   Future<void> updateInvoice(Invoice invoice) async {
     await _invoiceCollection.doc(invoice.id).update(invoice.toMap());
+  }
+
+  @override
+  Stream<List<Invoice>> watchInvoices() {
+    return _invoiceCollection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => Invoice.fromMap((doc.data() as Map<String, dynamic>)))
+          .toList(),
+    );
   }
 }

@@ -27,4 +27,17 @@ class FirebaseClientRepository implements ClientRepository {
   Future<void> updateClient(Client client) async {
     await _clientCollection.doc(client.id).update(client.toMap());
   }
+
+  @override
+  Stream<List<Client>> watchClients() {
+    return _clientCollection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map(
+            (doc) => Client.fromMap(
+              doc.data() as Map<String, dynamic>,
+            ),
+          )
+          .toList(),
+    );
+  }
 }

@@ -6,4 +6,5 @@ abstract class InvoiceRepository {
   Future<void> updateInvoice(Invoice invoice);
   Future<List<Invoice>> getAllInvoices();
   Future<List<Invoice>> getInvoicesForProject(String projectId);
+  Stream<List<Invoice>> watchInvoices();
 }

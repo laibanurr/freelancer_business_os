@@ -16,6 +16,15 @@ class FirebaseProjectRepository implements ProjectRepository {
   }
 
   @override
+  Stream<List<Project>> watchProjects() {
+    return _projectCollection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => Project.fromMap(doc.data() as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  @override
   Future<List<Project>> getAllProjects() async {
     final snapshot = await _projectCollection.get();
     return snapshot.docs

@@ -30,4 +30,13 @@ class FirebaseTimeEntryRepository implements TimeEntryRepository {
   Future<void> updateTimeEntry(TimeEntry entry) async {
     await _timeEntryCollection.doc(entry.id).update(entry.toMap());
   }
+
+  @override
+  Stream<List<TimeEntry>> watchEntries() {
+    return _timeEntryCollection.snapshots().map(
+      (snapshot) => snapshot.docs
+          .map((doc) => TimeEntry.fromMap(doc.data() as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }

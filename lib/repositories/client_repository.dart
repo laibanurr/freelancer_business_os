@@ -5,4 +5,5 @@ abstract class ClientRepository {
   Future<void> deleteClient(String id);
   Future<void> updateClient(Client client);
   Future<List<Client>> getAllClients();
+  Stream<List<Client>> watchClients();
 }
