@@ -32,7 +32,7 @@ class FirebaseTimeEntryRepository implements TimeEntryRepository {
   }
 
   @override
-  Stream<List<TimeEntry>> watchEntries() {
+  Stream<List<TimeEntry>> watchTimeEntries() {
     return _timeEntryCollection.snapshots().map(
       (snapshot) => snapshot.docs
           .map((doc) => TimeEntry.fromMap(doc.data() as Map<String, dynamic>))
