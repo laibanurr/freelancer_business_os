@@ -6,4 +6,5 @@ abstract class TimeEntryRepository {
   Future<void> updateTimeEntry(TimeEntry entry);
   Future<List<TimeEntry>> getTimeEntriesForProject(String projectId);
   Stream<List<TimeEntry>> watchTimeEntries();
+  Stream<List<TimeEntry>> watchTimeEntriesForProject(String projectId);
 }

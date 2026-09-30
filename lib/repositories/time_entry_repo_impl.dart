@@ -8,7 +8,7 @@ class FirebaseTimeEntryRepository implements TimeEntryRepository {
 
   @override
   Future<void> addTimeEntry(TimeEntry entry) async {
-    await _timeEntryCollection.add(entry.toMap());
+    await _timeEntryCollection.doc(entry.id).set(entry.toMap());
   }
 
   @override
@@ -38,5 +38,15 @@ class FirebaseTimeEntryRepository implements TimeEntryRepository {
           .map((doc) => TimeEntry.fromMap(doc.data() as Map<String, dynamic>))
           .toList(),
     );
+
   }
+ @override
+Stream<List<TimeEntry>> watchTimeEntriesForProject(String projectId) {
+  return _timeEntryCollection
+      .where('projectId', isEqualTo: projectId)
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => TimeEntry.fromMap(doc.data() as Map<String, dynamic>))
+          .toList());
+}
 }
