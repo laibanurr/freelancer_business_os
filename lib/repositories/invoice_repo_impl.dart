@@ -7,7 +7,7 @@ class FirebaseInvoiceRepository implements InvoiceRepository {
       .collection('invoices');
   @override
   Future<void> addInvoice(Invoice invoice) async {
-    await _invoiceCollection.add(invoice.toMap());
+    await _invoiceCollection.doc(invoice.id).set(invoice.toMap());
   }
 
   @override

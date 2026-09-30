@@ -1,4 +1,3 @@
-import 'package:freelancer_business_os/models/invoice.dart';
 import 'package:freelancer_business_os/models/project.dart';
 
 abstract class ProjectRepository {
@@ -8,4 +7,5 @@ abstract class ProjectRepository {
   Future<void> deleteProject(String id);
   Future<void> updateProject(Project project);
   Stream<List<Project>> watchProjects();
+
 }

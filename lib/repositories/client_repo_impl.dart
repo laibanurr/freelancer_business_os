@@ -7,7 +7,7 @@ class FirebaseClientRepository implements ClientRepository {
       .collection('clients');
   @override
   Future<void> addClient(Client client) async {
-    await _clientCollection.add(client.toMap());
+    await _clientCollection.doc(client.id).set(client.toMap());
   }
 
   @override

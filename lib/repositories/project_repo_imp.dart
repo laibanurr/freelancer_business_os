@@ -7,7 +7,7 @@ class FirebaseProjectRepository implements ProjectRepository {
       .collection('projects');
   @override
   Future<void> addProject(Project project) async {
-    await _projectCollection.add(project.toMap());
+    await _projectCollection.doc(project.id).set(project.toMap());
   }
 
   @override

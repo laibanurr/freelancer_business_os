@@ -41,8 +41,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: SafeArea(child: Padding(
         padding: EdgeInsets.all(24.0),
         child: Column(
-          mainAxisAlignment: .center,
-        crossAxisAlignment: .stretch,
+          mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
          children: [
           const Text('Welcome back',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
