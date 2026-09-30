@@ -54,10 +54,13 @@ class _InvoiceGenerationScreenState
                       final project = projects.firstWhere(
                         (p) => p.id == _selectedProjectId,
                       );
-                      final timeEntryRepo = ref.read(timeEntryRepositoryProvider);
+                      final timeEntryRepo =
+                          ref.read(timeEntryRepositoryProvider);
                       final allEntries = await timeEntryRepo
                           .getTimeEntriesForProject(_selectedProjectId!);
-                      final existingInvoices = existingInvoicesAsync.value ?? [];
+                      if (!context.mounted) return;
+                      final existingInvoices =
+                          existingInvoicesAsync.value ?? [];
                       final alreadyBilledIds = existingInvoices
                           .expand((inv) => inv.timeEntryIds)
                           .toSet();
@@ -78,8 +81,9 @@ class _InvoiceGenerationScreenState
 
                       final totalHours = unBilled.fold<double>(
                         0,
-                        (sum, e) =>
-                            sum + e.endTime!.difference(e.startTime).inMinutes / 60,
+                        (total, e) =>
+                            total +
+                            e.endTime!.difference(e.startTime).inMinutes / 60,
                       );
 
                       final totalCents =
@@ -97,7 +101,9 @@ class _InvoiceGenerationScreenState
                         totalAmountInCents: totalCents,
                       );
 
-                      await ref.read(invoiceRepositoryProvider).addInvoice(invoice);
+                      await ref
+                          .read(invoiceRepositoryProvider)
+                          .addInvoice(invoice);
                       if (context.mounted) Navigator.pop(context);
                     },
                     child: const Text('Generate'),
