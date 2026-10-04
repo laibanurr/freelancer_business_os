@@ -42,6 +42,7 @@ dependencies:
   pdf: ^3.11.1
   shared_preferences: ^2.5.5
   lottie: ^3.6.1
+  firebase_ai: 2.3.0
 
 dev_dependencies:
   flutter_test:
