@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freelancer_business_os/screens/add_clients_screen.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -103,10 +102,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   textInputAction: TextInputAction.next,
                   label: 'Full Name',
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Name is required';
-                    if (v.trim().length < 2)
+                    }
+                    if (v.trim().length < 2) {
                       return ' Pleae Enter your full name';
+                    }
                     return null;
                   },
                 ),
@@ -119,13 +120,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   textInputAction: TextInputAction.next,
                   label: 'Email Address',
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty)
+                    if (v == null || v.trim().isEmpty) {
                       return 'Enter email Address';
+                    }
                     final emailRegex = RegExp(
                         r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
 
-                    if (!emailRegex.hasMatch(v.trim()))
+                    if (!emailRegex.hasMatch(v.trim())) {
                       return 'Enter valid Email Address';
+                    }
                     return null;
                   },
                 ),
