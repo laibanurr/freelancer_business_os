@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freelancer_business_os/screens/sign_up_screen.dart';
-
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
-
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -22,7 +20,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     try {
@@ -44,7 +41,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     const backgroundColor = Color(0xFFF8FAFC);
@@ -101,7 +97,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         if (value == null || value.trim().isEmpty) {
                           return 'Email is required';
                         }
-
                         final emailRegex = RegExp(
                           r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$",
                         );
@@ -152,6 +147,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ),
+                  ],
+                  const SizedBox(height: 16,),
                     ElevatedButton(
                         onPressed: _login,
                         style: ElevatedButton.styleFrom(
@@ -183,7 +180,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               fontWeight: FontWeight.w500),
                         ))
                   ],
-                ],
               ),
             ),
           )),
@@ -191,7 +187,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ));
   }
 }
-
 class CustomTextField extends StatelessWidget {
   final String label;
   final IconButton? suffixIcon;
