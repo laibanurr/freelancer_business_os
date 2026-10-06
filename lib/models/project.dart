@@ -8,7 +8,7 @@ class Project {
   final DateTime endDate;
   final String clientId;
   final String id;
-
+ final String? projectDescription; 
   Project({
     required this.clientId,
     required this.endDate,
@@ -17,6 +17,7 @@ class Project {
     required this.rateInCents,
     required this.startDate,
     required this.id,
+    required this.projectDescription
   });
 
   Map<String, dynamic> toMap() {
@@ -28,6 +29,7 @@ class Project {
       'startDate': startDate,
       'projectStatus': projectStatus,
       'projectName': projectName,
+      'projectDescription' : projectDescription
     };
   }
 
@@ -40,7 +42,9 @@ class Project {
       projectStatus: map['projectStatus'] as String,
       rateInCents: map['rateInCents'] as int,
       startDate: (map['startDate'] as Timestamp).toDate(),
-      id: map['id'] as String
+      id: map['id'] as String,
+      projectDescription: map['projectDescription'] != null ? map['projectDescription'] as String : 'Standard freelance project contract initialized.',
+
     );
   }
 }
