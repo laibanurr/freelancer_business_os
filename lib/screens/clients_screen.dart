@@ -11,27 +11,29 @@ class ClientsScreen extends ConsumerWidget {
     final clientAsync = ref.watch(clientsStreamProvider);
     const primaryIndigo = Color(0xFF4F46E5);
 
-    // 🌟 GLOBAL THEMING TOKENS LOOKUP ENGAGED
+    // Global Theming Tokens Lookup (100% Preserved)
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
 
     return Scaffold(
-      backgroundColor: backgroundColor, // Dynamic backdrop canvas framing
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
-        automaticallyImplyLeading: false, // Ensures a clean main nav shell display
+        automaticallyImplyLeading: false, 
         title: Text(
           'Clients Directory',
           style: TextStyle(
             fontWeight: FontWeight.bold, 
             fontSize: 22, 
-            color: textColor, // Dynamic header typography text color
+            color: textColor, 
           ),
         ),
       ),
+      // 🌟 FIXED POSITION: Normal Scaffold FAB parameters automatically anchor your 
+      // extended text button perfectly right to the bottom-right corner area!
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'clients_fab_tag',
         onPressed: () {
@@ -71,19 +73,14 @@ class ClientsScreen extends ConsumerWidget {
                       'No Clients Found',
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor),
                     ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Build your business ecosystem. Tap the button down below to register your very first corporate client profile.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey, fontSize: 14, height: 1.4),
-                    ),
                   ],
                 ),
               ),
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.only(top: 12, bottom: 96, left: 20, right: 20),
+            // Roomy padding so items roll up completely past your navbar bounds
+            padding: const EdgeInsets.only(top: 16, bottom: 100, left: 20, right: 20),
             itemCount: clients.length,
             separatorBuilder: (context, index) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
@@ -91,7 +88,7 @@ class ClientsScreen extends ConsumerWidget {
               return Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: cardColor, // Contextual canvas layout card color
+                  color: cardColor, 
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.grey.withValues(alpha: 0.15), 
@@ -107,7 +104,6 @@ class ClientsScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    // Avatar Profile Circle Bubble Wrapper
                     Container(
                       height: 52,
                       width: 52,
@@ -140,7 +136,7 @@ class ClientsScreen extends ConsumerWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: textColor, // Dynamic item header string color
+                              color: textColor, 
                             ),
                           ),
                           const SizedBox(height: 4),

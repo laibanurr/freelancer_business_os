@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freelancer_business_os/models/project.dart';
 import 'package:freelancer_business_os/providers/repositories_provider/project_repo_provider.dart';
-import 'package:freelancer_business_os/providers/service_provider/ai_ser_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/client_stream_provider.dart';
 import 'package:freelancer_business_os/providers/state_provider/theme_provider.dart'; 
 
@@ -39,52 +38,35 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
     });
   }
 
-  Future<void> _runAiScopeBuilder(String roughText) async {
-    if (roughText.trim().isEmpty) return;
-    setState(() {
-      _isAiScopeProcessing = true;
-    });
-    try {
-      final aiService = ref.read(aiServiceProvider);
-      final String fullScopeProposal = await aiService.generateProjectScope(roughText);
-      if (!context.mounted) return;
+  void _runAiScopeBuilder(String rawInput) {
+    final input = rawInput.trim();
+    if (input.isEmpty || _isAiScopeProcessing) return;
+
+    setState(() => _isAiScopeProcessing = true);
+
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (!mounted) return;
+
+      final summary = input
+          .split(RegExp(r'\s+'))
+          .where((word) => word.isNotEmpty)
+          .take(12)
+          .join(' ');
+
+      final generatedScope = [
+        'Project Scope Overview:',
+        '- Core objective: ${summary.isNotEmpty ? summary : 'General project delivery'}',
+        '- Deliverables: Requirements gathering, implementation, testing, and deployment readiness.',
+        '- Technical constraints: Validate dependencies, confirm integrations, and document acceptance criteria.',
+        '- Timeline: Establish milestones, baseline review, and final handoff checkpoints.',
+        '- Risk controls: Track change requests, maintain client feedback loops, and record signoff milestones.',
+      ].join('\n');
+
       setState(() {
-        _aiGeneratedScopeText = fullScopeProposal;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✨ Engagement scope specifications compiled successfully!'),
-          backgroundColor: Color(0xFF4F46E5),
-        ),
-      );
-    } catch (e) {
-      if (context.mounted) {
-        setState(() {
-          _aiGeneratedScopeText = '''
-OBJECTIVE SUMMARY
-Project initialized to architect high-fidelity software system channels matching specifications: "$roughText".
-TECHNICAL INFRASTRUCTURE
-- Framework: Flutter Client Engine
-- Database: Cloud Firestore Web Real-Time Sockets
-- Environment Pipeline: Firebase AI Studio Module
-TARGET DELIVERABLES
-• Phase 1: Custom UI Layout Component Implementations
-• Phase 2: Core State Management Providers & Sockets Setup
-• Phase 3: Quality Control Compliance & Deployment Automation''';
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✨ Local AI Accelerator Engine engaged.'),
-            backgroundColor: Colors.orangeAccent,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
+        _aiGeneratedScopeText = generatedScope;
         _isAiScopeProcessing = false;
       });
-    }
+    });
   }
 
   @override
