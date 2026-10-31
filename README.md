@@ -29,31 +29,31 @@ $$\text{Client (CRM)} \longrightarrow \text{Project (Contract)} \longrightarrow 
 
 ---
 
+
+
 ## 🏛️ System Architecture
 
 The application is structured strictly under the **Dependency Inversion Principle (SOLID)** and **Clean Architecture**. The UI layer has zero direct database imports, depending solely on abstract repository interfaces managed by Riverpod.
-code
-Code
-PRESENTATION LAYER (UI)
-    [ClientsScreen]   [ProjectsScreen]   [TimeEntriesScreen]   [InvoicesScreen]
-                          │                     │
-                          ▼                     ▼
-                  RIVERPOD STATE MANAGEMENT LAYER
-    [clientsStreamProvider]    [projectsStreamProvider]    [chatProvider]
-                          │                     │
-                          ▼                     ▼
-                  REPOSITORY ABSTRACTION LAYER (SOLID)
-    [ClientRepository]     [ProjectRepository]     [TimeEntryRepository]
-    (Abstract interfaces enabling 100% offline unit-test mockability)
-                          │                     │
-                          ▼                     ▼
-                INFRASTRUCTURE & SERVICE LAYER
-    [FirebaseClientRepo]   [FirebaseProjectRepo]   [AiService]
-             │                      │                    │
-             ▼                      ▼                    ▼
-    [Cloud Firestore]      [Firebase Auth]      [Google Gemini API]
-code
-Code
+
+```text
+                           PRESENTATION LAYER (UI)
+        [ClientsScreen]   [ProjectsScreen]   [TimeEntriesScreen]   [InvoicesScreen]
+                              │                     │
+                              ▼                     ▼
+                      RIVERPOD STATE MANAGEMENT LAYER
+        [clientsStreamProvider]    [projectsStreamProvider]    [chatProvider]
+                              │                     │
+                              ▼                     ▼
+                      REPOSITORY ABSTRACTION LAYER (SOLID)
+        [ClientRepository]     [ProjectRepository]     [TimeEntryRepository]
+        (Abstract interfaces enabling 100% offline unit-test mockability)
+                              │                     │
+                              ▼                     ▼
+                    INFRASTRUCTURE & SERVICE LAYER
+        [FirebaseClientRepo]   [FirebaseProjectRepo]   [AiService]
+                 │                      │                    │
+                 ▼                      ▼                    ▼
+        [Cloud Firestore]      [Firebase Auth]      [Google Gemini API]
 ---
 
 ## 🌟 Key Engineering Highlights
@@ -97,7 +97,7 @@ Verified Test Cases:
 ✔️ Immutability & copyWith: Verifies state updates clone objects cleanly while preserving unmentioned fields.
 ✔️ Retainer Null-Clearing: Validates that boolean sentinel flags (clearEndDate: true) safely wipe optional dates to null.
 ✔️ Anti-Double-Billing Engine: Proves already-billed time IDs are excluded in 
-O
+
 (
 1
 )
