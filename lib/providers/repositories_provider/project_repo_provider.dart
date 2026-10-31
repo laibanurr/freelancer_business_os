@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freelancer_business_os/providers/repositories_provider/client_repo_provider.dart';
 import 'package:freelancer_business_os/repositories/project_repo_imp.dart';
 import 'package:freelancer_business_os/repositories/project_repository.dart';
 
 final projectRepositoryProvider = Provider<ProjectRepository>(
-  (ref) => FirebaseProjectRepository(),
+  (ref) => FirebaseProjectRepository( firestore: ref.watch(firestoreProvider),
+    auth: ref.watch(authProvider),),
 );

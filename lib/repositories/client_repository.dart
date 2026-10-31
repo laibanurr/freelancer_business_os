@@ -1,6 +1,8 @@
 import 'package:freelancer_business_os/models/client.dart';
 
 abstract class ClientRepository {
+  String newClientId();
+
   Future<void> addClient(Client client);
   Future<void> deleteClient(String id);
   Future<void> updateClient(Client client);

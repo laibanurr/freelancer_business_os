@@ -1,6 +1,9 @@
 import 'package:freelancer_business_os/models/invoice.dart';
 
 abstract class InvoiceRepository {
+  /// Generates a unique document ID behind the abstraction layer
+  String newInvoiceId();
+
   Future<void> addInvoice(Invoice invoice);
   Future<void> deleteInvoice(String id);
   Future<void> updateInvoice(Invoice invoice);

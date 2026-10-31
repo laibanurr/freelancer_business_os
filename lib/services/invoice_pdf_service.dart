@@ -81,7 +81,7 @@ class InvoicePdfService {
 
     final Uint8List pdfBytesBytesBuffer = await pdf.save();
 
-    // 🌟 SECURE MODERN WEB PREVIEW DOWNLOAD INJECTION
+    
     if (kIsWeb) {
       final blobDataFileBlob = web.Blob(
         [pdfBytesBytesBuffer.toJS].toJS,
@@ -89,7 +89,7 @@ class InvoicePdfService {
       );
       final stringLinkUrlToken = web.URL.createObjectURL(blobDataFileBlob);
 
-      // Spawn an anchor link onto the browser document window natively
+      
       final anchor = web.document.createElement('a') as web.HTMLAnchorElement;
       anchor.href = stringLinkUrlToken;
       anchor.download = "Invoice_INV-${invoice.id.substring(0, 6).toUpperCase()}.pdf";
@@ -97,7 +97,7 @@ class InvoicePdfService {
       web.document.body?.appendChild(anchor);
       anchor.click();
       
-      // Cleanup DOM node memory blocks
+      
       web.document.body?.removeChild(anchor);
       web.URL.revokeObjectURL(stringLinkUrlToken);
     } else {
