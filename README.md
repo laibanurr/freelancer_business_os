@@ -1,4 +1,3 @@
-
 <div align="center">
 
 # 💼 Freelancer Business OS
@@ -25,11 +24,10 @@
 Solo freelancers frequently juggle 5 to 6 disconnected tools (WhatsApp, Notion, Clockify, Excel, and PayPal) to manage their business. This fragmentation results in **revenue leakage** (up to 30% of billable hours go untracked) and **cash flow blindness** (unclear tax liability and uncollected receivables).
 
 **Freelancer Business OS** resolves this by establishing a unified, reactive pipeline:
+
 $$\text{Client (CRM)} \longrightarrow \text{Project (Contract)} \longrightarrow \text{Time Log (Stopwatch)} \longrightarrow \text{Invoice (PDF)} \longrightarrow \text{AI CFO (Grounded)}$$
 
 ---
-
-
 
 ## 🏛️ System Architecture
 
@@ -54,6 +52,8 @@ The application is structured strictly under the **Dependency Inversion Principl
                  │                      │                    │
                  ▼                      ▼                    ▼
         [Cloud Firestore]      [Firebase Auth]      [Google Gemini API]
+```
+
 ---
 
 ## 🌟 Key Engineering Highlights
@@ -92,22 +92,21 @@ The codebase includes targeted unit tests verifying core accounting algorithms, 
 ```bash
 # Run the test suite:
 flutter test
-Verified Test Cases:
-✔️ Currency Exactness: Proves $50.25/hr converts to exactly 5025 integer cents without precision loss.
-✔️ Immutability & copyWith: Verifies state updates clone objects cleanly while preserving unmentioned fields.
-✔️ Retainer Null-Clearing: Validates that boolean sentinel flags (clearEndDate: true) safely wipe optional dates to null.
-✔️ Anti-Double-Billing Engine: Proves already-billed time IDs are excluded in 
+```
 
-(
-1
-)
-O(1)
- time from future invoices.
-✔️ Offline Regex Extraction: Verifies email and phone extraction from messy unstructured text signatures when AI is offline.
-✔️ Null-Safety Edge Cases: Verifies empty fallback defaults prevent runtime type-cast exceptions.
-📂 Project Structure
-code
-Text
+### Verified Test Cases:
+* ✔️ **Currency Exactness:** Proves `$50.25/hr` converts to exactly `5025` integer cents without precision loss.
+* ✔️ **Immutability & copyWith:** Verifies state updates clone objects cleanly while preserving unmentioned fields.
+* ✔️ **Retainer Null-Clearing:** Validates that boolean sentinel flags (`clearEndDate: true`) safely wipe optional dates to `null`.
+* ✔️ **Anti-Double-Billing Engine:** Proves already-billed time IDs are excluded in $O(1)$ time from future invoices.
+* ✔️ **Offline Regex Extraction:** Verifies email and phone extraction from messy unstructured text signatures when AI is offline.
+* ✔️ **Null-Safety Edge Cases:** Verifies empty fallback defaults prevent runtime type-cast exceptions.
+
+---
+
+## 📂 Project Structure
+
+```text
 lib/
 ├── models/                  # Pure immutable domain entities (Client, Project, Invoice, TimeEntry)
 ├── repositories/            # Abstract contracts & Firebase implementations
@@ -123,14 +122,19 @@ lib/
 test/
 ├── models/                  # Unit tests for domain entity arithmetic
 └── logic/                   # Algorithmic tests (Anti-double-billing & regex parsing)
-🚀 Getting Started
-Prerequisites
-Flutter SDK (3.x or higher)
-Dart SDK (3.x or higher)
-Firebase CLI & Configured Google Project
-Installation
-code
-Bash
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+* Flutter SDK (3.x or higher)
+* Dart SDK (3.x or higher)
+* Firebase CLI & Configured Google Project
+
+### Installation
+```bash
 # 1. Clone the repository
 git clone https://github.com/laibanurr/freelancer_business_os.git
 
@@ -145,7 +149,10 @@ flutter test
 
 # 5. Run the application
 flutter run
-<div align="center">
-<sub>Engineered by <b>Laiba Nur</b> • Specialized in Flutter, Riverpod & Mobile Architecture</sub>
-</div>
 ```
+
+---
+
+<div align="center">
+  <sub>Engineered by <b>Laiba Nur</b> • Specialized in Flutter, Riverpod & Mobile Architecture</sub>
+</div>
