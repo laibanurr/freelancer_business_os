@@ -347,22 +347,20 @@ STRATEGIC BUSINESS ADVISORY SUMMARY
                           ),
                         ),
                       ),
-                      barGroups: List.generate(4, (i) {
-                        final isLastBar = i == 3;
-                        return BarChartGroupData(
-                          x: i,
-                          barRods: [
-                            BarChartRodData(
-                              toY: monthlyTotals[i],
-                              color: isLastBar
-                                  ? _primaryIndigo
-                                  : _primaryIndigo.withValues(alpha: 0.25),
-                              width: 32,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ],
-                        );
-                      }),
+                     barGroups: List.generate(4, (i) {
+  return BarChartGroupData(
+    x: i,
+    barRods: [
+      BarChartRodData(
+        toY: monthlyTotals[i],
+        
+        color: _primaryIndigo,
+        width: 32,
+        borderRadius: BorderRadius.circular(8),
+      ),
+    ],
+  );
+}),
                     ),
                   ),
                 ),

@@ -10,6 +10,7 @@ import 'package:freelancer_business_os/providers/stream_provider/invoice_stream_
 import 'package:freelancer_business_os/providers/stream_provider/project_stream_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/user_profile_stream_provider.dart';
 import 'package:freelancer_business_os/services/invoice_pdf_service.dart';
+
 const _primaryIndigo = Color(0xFF4F46E5);
 class InvoiceDetailedScreen extends ConsumerWidget {
   final Invoice invoice;

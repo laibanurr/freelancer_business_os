@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freelancer_business_os/models/project.dart';
 void main() {
+  
   group('Project Model & Financial Arithmetic Tests', () {
     test('Converts hourly rate in dollars to exact integer cents without rounding decay', () {
       const rateDollars = 50.25;
@@ -35,6 +36,7 @@ void main() {
         rateInCents: 5000,
         startDate: DateTime(2026, 1, 1),
         endDate: DateTime(2026, 6, 1),
+
       );
       final retainerProject = projectWithEnd.copyWith(clearEndDate: true);
       expect(retainerProject.endDate, isNull);

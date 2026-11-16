@@ -1,43 +1,58 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:freelancer_business_os/models/user_profile.dart';
 import 'package:freelancer_business_os/providers/repositories_provider/client_repo_provider.dart';
 import 'package:freelancer_business_os/providers/repositories_provider/user_profile_repo_provider.dart';
 import 'package:freelancer_business_os/providers/state_provider/theme_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/user_profile_stream_provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 const _primaryIndigo = Color(0xFF4F46E5);
+const _luxuryRose = Color(0xFFE11D48);
+
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
+
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
+
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _businessController;
-  late TextEditingController _emailController;
-  String _currentCurrency = '\$';
+
   Uint8List? _memoryImageBytes;
   bool _isInitialized = false;
-  bool _isSaving = false;
+  bool _notificationsEnabled = true;
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
     _businessController = TextEditingController();
-    _emailController = TextEditingController();
-    _nameController.addListener(() => setState(() {}));
-    _businessController.addListener(() => setState(() {}));
+    _loadSavedProfileImage();
   }
+
+  Future<void> _loadSavedProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final base64String = prefs.getString('saved_profile_avatar');
+    if (base64String != null && mounted) {
+      setState(() {
+        _memoryImageBytes = base64Decode(base64String);
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _businessController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
+
   Future<void> _pickProfileImageFromGallery() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -45,70 +60,213 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         source: ImageSource.gallery,
         imageQuality: 75,
       );
+
       if (pickedFile != null) {
         final Uint8List imageBytes = await pickedFile.readAsBytes();
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('saved_profile_avatar', base64Encode(imageBytes));
+
         if (!mounted) return;
-        setState(() {
-          _memoryImageBytes = imageBytes;
-        });
+        setState(() => _memoryImageBytes = imageBytes);
       }
     } catch (e) {
       debugPrint('Media Picker Error: $e');
     }
   }
-  String _getInitials(String name) {
-    final clean = name.trim();
-    if (clean.isEmpty) return 'OS';
-    if (clean.length >= 2) return clean.substring(0, 2).toUpperCase();
-    return clean[0].toUpperCase();
+
+  void _openEditProfileDialog(UserProfile profile, String uid) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Edit Workspace Info',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Display Name'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _businessController,
+              decoration:
+                  const InputDecoration(labelText: 'Studio / Brand Name'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final updated = profile.copyWith(
+                fullName: _nameController.text.trim(),
+                businessName: _businessController.text.trim(),
+              );
+              await ref.read(userProfileRepositoryProvider).saveProfile(updated);
+              if (!mounted) return;
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryIndigo,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
-  Future<void> _saveSettings(String uid) async {
-    if (!_formKey.currentState!.validate() || _isSaving) return;
-    setState(() => _isSaving = true);
-    FocusScope.of(context).unfocus();
-    try {
-      final updatedProfile = UserProfile(
-        id: uid,
-        fullName: _nameController.text.trim(),
-        businessName: _businessController.text.trim(),
-        accountEmail: _emailController.text.trim(),
-        selectedCurrencySymbol: _currentCurrency,
-      );
-      await ref.read(userProfileRepositoryProvider).saveProfile(updatedProfile);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✨ Workspace Profile settings updated cleanly!'),
-          backgroundColor: _primaryIndigo,
-          behavior: SnackBarBehavior.floating,
+
+  void _openChangePasswordDialog() {
+    final email = ref.read(authProvider).currentUser?.email ?? '';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Reset Password',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        content: Text('Send a secure password reset link to:\n$email?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (email.isNotEmpty) {
+                await ref
+                    .read(authProvider)
+                    .sendPasswordResetEmail(email: email);
+                if (!mounted) return;
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content:
+                          Text('Password reset link sent to your email!')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryIndigo, foregroundColor: Colors.white),
+            child: const Text('Send Link'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleSignOut() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Log out of workspace?'),
+        content: const Text(
+            'You will need to sign back in with your email and password.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: _primaryIndigo, foregroundColor: Colors.white),
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true) {
+      await ref.read(authProvider).signOut();
+    }
+  }
+
+  Future<void> _handleDeleteAccount() async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete your account?'),
+        content: const Text(
+          'This action is irreversible. All your contracts, time logs, and invoices will be permanently deleted.',
         ),
-      );
-    } catch (e) {
-      debugPrint('Profile Save Error: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Could not update profile: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _luxuryRose,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true) {
+      final auth = ref.read(authProvider);
+
+      try {
+        // Attempt immediate deletion
+        await auth.currentUser?.delete();
+        // AuthGate automatically redirects to LoginScreen!
+      } catch (e) {
+        if (!mounted) return;
+
+        // 🛡️ SECURITY HANDOFF:
+        // If Firebase requires a fresh login, explain and log them out!
+        await showDialog(
+          context: context,
+          builder: (dialogCtx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Text('Security Verification Required'),
+            content: const Text(
+              'For your security, deleting an account requires recent credentials.\n\nYou will now be logged out. Please log in once more, and then you can confirm permanent deletion.',
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () async {
+                  Navigator.pop(dialogCtx);
+                  await auth.signOut(); // 👈 Signs out and returns to LoginScreen!
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryIndigo,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Proceed to Login'),
+              ),
+            ],
+          ),
+        );
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
     final uid = auth.currentUser?.uid ?? 'unknown_user';
+    final userEmail = auth.currentUser?.email ?? 'user@example.com';
+
     final isDarkMode = ref.watch(themeProvider);
+
     final backgroundColor =
         isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6);
     final cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDarkMode ? Colors.white : const Color(0xFF1F2937);
     final textSubColor = isDarkMode ? Colors.white60 : Colors.grey.shade600;
+
     final profileAsync = ref.watch(userProfileStreamProvider(uid));
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -116,357 +274,237 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          'Workspace Profile',
+          'Settings',
           style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            letterSpacing: -0.8,
-          ),
+              color: textColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              letterSpacing: -0.5),
         ),
       ),
       body: SafeArea(
         child: profileAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: _primaryIndigo),
-          ),
+              child: CircularProgressIndicator(color: _primaryIndigo)),
           error: (err, stack) => Center(
-            child: Text(
-              'Stream Sync Error: $err',
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ),
+              child: Text('Sync Error: $err',
+                  style: const TextStyle(color: _luxuryRose))),
           data: (profile) {
             if (!_isInitialized) {
               _nameController.text = profile.fullName;
               _businessController.text = profile.businessName;
-              _emailController.text = profile.accountEmail;
-              _currentCurrency = profile.selectedCurrencySymbol;
               _isInitialized = true;
             }
-            final displayName = _nameController.text.trim().isNotEmpty
-                ? _nameController.text.trim()
-                : 'New Freelancer';
-            final displayBusiness = _businessController.text.trim().isNotEmpty
-                ? _businessController.text.trim()
-                : 'Independent Studio';
+
             return SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: isDarkMode ? 0.2 : 0.04),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          )
-                        ],
-                      ),
-                      child: Column(
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // PROFILE AVATAR
+                  GestureDetector(
+                    onTap: _pickProfileImageFromGallery,
+                    child: Center(
+                      child: Stack(
                         children: [
-                          GestureDetector(
-                            onTap: _pickProfileImageFromGallery,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Container(
-                                  width: 104,
-                                  height: 104,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: [_primaryIndigo, Color(0xFF818CF8)],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: 96,
-                                  height: 96,
-                                  decoration: BoxDecoration(
-                                    color: cardColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 46,
-                                    backgroundColor:
-                                        _primaryIndigo.withValues(alpha: 0.05),
-                                    backgroundImage: _memoryImageBytes != null
-                                        ? MemoryImage(_memoryImageBytes!)
-                                        : null,
-                                    child: _memoryImageBytes == null
-                                        ? Text(
-                                            _getInitials(displayName),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 26,
-                                              color: _primaryIndigo,
-                                              letterSpacing: -0.5,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 0,
-                                  right: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: _primaryIndigo,
-                                      shape: BoxShape.circle,
-                                      border:
-                                          Border.all(color: cardColor, width: 2),
-                                    ),
-                                    child: const Icon(
-                                      Icons.edit_rounded,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          CircleAvatar(
+                            radius: 44,
+                            backgroundColor:
+                                _primaryIndigo.withValues(alpha: 0.1),
+                            backgroundImage: _memoryImageBytes != null
+                                ? MemoryImage(_memoryImageBytes!)
+                                : null,
+                            child: _memoryImageBytes == null
+                                ? Text(
+                                    profile.fullName.isNotEmpty
+                                        ? profile.fullName
+                                            .substring(0, 1)
+                                            .toUpperCase()
+                                        : 'F',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 32,
+                                        color: _primaryIndigo),
+                                  )
+                                : null,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            displayName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                              color: textColor,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            displayBusiness,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: textSubColor,
-                              fontWeight: FontWeight.w500,
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                  color: _primaryIndigo,
+                                  shape: BoxShape.circle),
+                              child: const Icon(Icons.camera_alt_rounded,
+                                  color: Colors.white, size: 14),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 28),
-                    Text(
-                      'ACCOUNT PARAMETERS',
-                      style: TextStyle(
-                        fontSize: 11,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    profile.fullName,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: textSubColor,
-                        letterSpacing: 1.2,
+                        fontSize: 20,
+                        color: textColor),
+                  ),
+                  Text(
+                    profile.businessName,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: textSubColor),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // GROUP 1: ACCOUNT
+                  _buildSectionHeader('ACCOUNT', textSubColor),
+                  _buildCardContainer(
+                    cardColor,
+                    isDarkMode,
+                    children: [
+                      _buildSettingsTile(
+                        icon: Icons.person_outline_rounded,
+                        title: 'Display & Studio Name',
+                        subtitle:
+                            '${profile.fullName} • ${profile.businessName}',
+                        onTap: () => _openEditProfileDialog(profile, uid),
+                        textColor: textColor,
+                        textSubColor: textSubColor,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: isDarkMode ? 0.1 : 0.02),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          )
-                        ],
+                      _buildDivider(isDarkMode),
+                      _buildSettingsTile(
+                        icon: Icons.mail_outline_rounded,
+                        title: 'Email Address',
+                        subtitle: userEmail,
+                        onTap: null,
+                        textColor: textColor,
+                        textSubColor: textSubColor,
+                        trailing: null,
                       ),
-                      child: Column(
-                        children: [
-                          _SettingsInputTextField(
-                            controller: _nameController,
-                            label: 'Full Display Name',
-                            icon: Icons.person_outline_rounded,
-                            isDark: isDarkMode,
-                          ),
-                          Divider(
-                            height: 24,
-                            color: Colors.grey.withValues(alpha: 0.15),
-                          ),
-                          _SettingsInputTextField(
-                            controller: _businessController,
-                            label: 'Studio Branding',
-                            icon: Icons.business_center_outlined,
-                            isDark: isDarkMode,
-                          ),
-                          Divider(
-                            height: 24,
-                            color: Colors.grey.withValues(alpha: 0.15),
-                          ),
-                          _SettingsInputTextField(
-                            controller: _emailController,
-                            label: 'Billing Email',
-                            icon: Icons.mail_outline_rounded,
-                            keyboardType: TextInputType.emailAddress,
-                            isDark: isDarkMode,
-                          ),
-                        ],
+                      _buildDivider(isDarkMode),
+                      _buildSettingsTile(
+                        icon: Icons.lock_outline_rounded,
+                        title: 'Change Password',
+                        subtitle: 'Send password reset link to your email',
+                        onTap: _openChangePasswordDialog,
+                        textColor: textColor,
+                        textSubColor: textSubColor,
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      'SYSTEM UTILITIES',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: textSubColor,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: isDarkMode ? 0.1 : 0.02),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          )
-                        ],
-                      ),
-                      child: SwitchListTile(
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // GROUP 2: PREFERENCES
+                  _buildSectionHeader('PREFERENCES', textSubColor),
+                  _buildCardContainer(
+                    cardColor,
+                    isDarkMode,
+                    children: [
+                      SwitchListTile(
                         value: isDarkMode,
                         onChanged: (val) =>
                             ref.read(themeProvider.notifier).toggleTheme(),
                         secondary: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _primaryIndigo.withValues(alpha: 0.08),
-                            shape: BoxShape.circle,
-                          ),
+                              color: Colors.grey.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10)),
                           child: Icon(
-                            isDarkMode
-                                ? Icons.dark_mode_rounded
-                                : Icons.light_mode_rounded,
-                            color: _primaryIndigo,
-                            size: 20,
-                          ),
+                              isDarkMode
+                                  ? Icons.dark_mode_rounded
+                                  : Icons.light_mode_rounded,
+                              size: 20,
+                              color: _primaryIndigo),
                         ),
-                        title: Text(
-                          'Dark Interface Core',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
+                        title: Text('Appearance',
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: textColor)),
                         subtitle: Text(
-                          'Invert global canvas stylesheets',
-                          style: TextStyle(fontSize: 12, color: textSubColor),
-                        ),
+                            isDarkMode
+                                ? 'Dark Interface'
+                                : 'Light Interface',
+                            style: TextStyle(
+                                fontSize: 12, color: textSubColor)),
                         activeThumbColor: _primaryIndigo,
                       ),
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      'GLOBAL CURRENCY MATRICES',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: textSubColor,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black
-                                .withValues(alpha: isDarkMode ? 0.1 : 0.02),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          )
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          _buildCurrencyFlagChip(
-                            '\$',
-                            'USD',
-                            '🇺🇸',
-                            isDarkMode,
-                            _primaryIndigo,
-                          ),
-                          _buildCurrencyFlagChip(
-                            '€',
-                            'EUR',
-                            '🇪🇺',
-                            isDarkMode,
-                            _primaryIndigo,
-                          ),
-                          _buildCurrencyFlagChip(
-                            '£',
-                            'GBP',
-                            '🇬🇧',
-                            isDarkMode,
-                            _primaryIndigo,
-                          ),
-                          _buildCurrencyFlagChip(
-                            '₨',
-                            'PKR',
-                            '🇵🇰',
-                            isDarkMode,
-                            _primaryIndigo,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 36),
-                    ElevatedButton(
-                      onPressed: _isSaving ? null : () => _saveSettings(uid),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryIndigo,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                      _buildDivider(isDarkMode),
+                      SwitchListTile(
+                        value: _notificationsEnabled,
+                        onChanged: (val) =>
+                            setState(() => _notificationsEnabled = val),
+                        secondary: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10)),
+                          child: const Icon(Icons.notifications_none_rounded,
+                              size: 20, color: _primaryIndigo),
                         ),
-                      ),
-                      child: _isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Save Profile Settings',
-                              style: TextStyle(
+                        title: Text('Notifications',
+                            style: TextStyle(
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                                letterSpacing: -0.2,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                                color: textColor)),
+                        subtitle: Text(
+                            'Background timer alerts & invoice reminders',
+                            style: TextStyle(
+                                fontSize: 12, color: textSubColor)),
+                        activeThumbColor: _primaryIndigo,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // GROUP 3: ABOUT & SESSIONS (With Luxury Rose)
+                  _buildSectionHeader('ABOUT & SESSIONS', textSubColor),
+                  _buildCardContainer(
+                    cardColor,
+                    isDarkMode,
+                    children: [
+                      _buildSettingsTile(
+                        icon: Icons.info_outline_rounded,
+                        title: 'Version',
+                        subtitle: 'v1.0.0 (Production Release)',
+                        onTap: null,
+                        textColor: textColor,
+                        textSubColor: textSubColor,
+                        trailing: null,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildSettingsTile(
+                        icon: Icons.logout_rounded,
+                        title: 'Log Out',
+                        subtitle: 'Safely sign out of this device',
+                        onTap: _handleSignOut,
+                        textColor: textColor,
+                        textSubColor: textSubColor,
+                        iconColor: _primaryIndigo,
+                      ),
+                      _buildDivider(isDarkMode),
+                      _buildSettingsTile(
+                        icon: Icons.delete_forever_rounded,
+                        title: 'Delete Account',
+                        subtitle: 'Permanently purge all data and contracts',
+                        onTap: _handleDeleteAccount,
+                        textColor: _luxuryRose,
+                        textSubColor: textSubColor,
+                        iconColor: _luxuryRose,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                ],
               ),
             );
           },
@@ -474,117 +512,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
-  Widget _buildCurrencyFlagChip(
-    String symbol,
-    String code,
-    String flag,
-    bool isDark,
-    Color indigo,
-  ) {
-    final isSelected = _currentCurrency == symbol;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _currentCurrency = symbol),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? const LinearGradient(
-                    colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                  )
-                : null,
-            color: isSelected
-                ? null
-                : (isDark
-                    ? const Color(0xFF0F172A)
-                    : const Color(0xFFF9FAFB)),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isSelected
-                  ? Colors.transparent
-                  : (isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.grey.withValues(alpha: 0.1)),
-            ),
-          ),
-          child: Column(
-            children: [
-              Text(flag, style: const TextStyle(fontSize: 18)),
-              const SizedBox(height: 6),
-              Text(
-                code,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected
-                      ? Colors.white
-                      : (isDark ? Colors.white70 : Colors.black87),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                symbol,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: isSelected ? Colors.white70 : Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
+
+  Widget _buildSectionHeader(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: color,
+            letterSpacing: 1.0),
       ),
     );
   }
-}
-class _SettingsInputTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String label;
-  final IconData icon;
-  final TextInputType? keyboardType;
-  final bool isDark;
-  const _SettingsInputTextField({
-    required this.controller,
-    required this.label,
-    required this.icon,
-    this.keyboardType,
-    required this.isDark,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      style: TextStyle(
-        color: isDark ? Colors.white : Colors.black87,
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
+
+  Widget _buildCardContainer(Color bgColor, bool isDark,
+      {required List<Widget> children}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.grey.withValues(alpha: 0.12),
+        ),
       ),
-      validator: (v) =>
-          (v == null || v.trim().isEmpty) ? '$label cannot be empty' : null,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(
-          color: Colors.grey,
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback? onTap,
+    required Color textColor,
+    required Color textSubColor,
+    Color? iconColor,
+    Widget? trailing = const Icon(Icons.arrow_forward_ios_rounded,
+        size: 14, color: Colors.grey),
+  }) {
+    return ListTile(
+      onTap: onTap,
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: (iconColor ?? _primaryIndigo).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
         ),
-        floatingLabelStyle: const TextStyle(
-          color: Color(0xFF4F46E5),
-          fontWeight: FontWeight.bold,
-        ),
-        prefixIcon: Icon(
-          icon,
-          color: const Color(0xFF4F46E5).withValues(alpha: 0.7),
-          size: 18,
-        ),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+        child: Icon(icon, size: 18, color: iconColor ?? _primaryIndigo),
       ),
+      title: Text(title,
+          style: TextStyle(
+              fontSize: 14, fontWeight: FontWeight.bold, color: textColor)),
+      subtitle: Text(subtitle,
+          style: TextStyle(fontSize: 12, color: textSubColor)),
+      trailing: trailing,
+    );
+  }
+
+  Widget _buildDivider(bool isDark) {
+    return Divider(
+      height: 1,
+      indent: 52,
+      color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.1),
     );
   }
 }

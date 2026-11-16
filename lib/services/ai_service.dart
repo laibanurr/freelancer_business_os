@@ -1,20 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_ai/firebase_ai.dart';
+
 class AiService {
   final GenerativeModel _model;
   final GenerativeModel _jsonModel;
-  static const Duration _requestTimeout = Duration(seconds: 15);
+  static const Duration _requestTimeout = Duration(seconds: 12);
   AiService({
     GenerativeModel? model,
     GenerativeModel? jsonModel,
   })  : _model = model ??
             FirebaseAI.googleAI().generativeModel(
-              model: 'gemini-flash-latest',
+              model: 'gemini-3.8-flash',
             ),
         _jsonModel = jsonModel ??
             FirebaseAI.googleAI().generativeModel(
-              model: 'gemini-flash-latest',
+              model: 'gemini-3.8-flash',
               generationConfig: GenerationConfig(
                 responseMimeType: 'application/json',
                 responseSchema: Schema.object(
@@ -27,7 +28,8 @@ class AiService {
                 ),
               ),
             );
-  Future<Map<String, dynamic>> parseClientInformation(String rawInputText) async {
+  Future<Map<String, dynamic>> parseClientInformation(
+      String rawInputText) async {
     final trimmedInput = rawInputText.trim();
     if (trimmedInput.isEmpty) return {};
     final instructions = '''
@@ -42,16 +44,15 @@ Use an empty string for anything not in the text. Never invent values.
       ])
     ];
     try {
-      final response = await _jsonModel
-          .generateContent(content)
-          .timeout(_requestTimeout);
+      final response =
+          await _jsonModel.generateContent(content).timeout(_requestTimeout);
       var text = (response.text ?? '').trim();
       if (text.isEmpty) {
         throw const FormatException('Gemini returned an empty response.');
       }
       text = text
           .replaceAll(RegExp(r'^```(?:json)?\s*'), '')
-          .replaceAll(RegExp(r'\s*```$'), '') 
+          .replaceAll(RegExp(r'\s*```$'), '')
           .trim();
       final decoded = jsonDecode(text);
       if (decoded is Map<String, dynamic>) {
@@ -59,11 +60,13 @@ Use an empty string for anything not in the text. Never invent values.
       }
       return {};
     } on TimeoutException {
-      throw Exception('AI request timed out. Please check your internet connection.');
+      throw Exception(
+          'AI request timed out. Please check your internet connection.');
     } catch (e) {
       rethrow;
     }
   }
+
   Future<String> generateProjectScope(
     String roughNotes, {
     String? projectName,
@@ -92,15 +95,15 @@ Payment
         TextPart(contextInfo),
       ])
     ];
-    final response = await _model
-        .generateContent(content)
-        .timeout(_requestTimeout);
+    final response =
+        await _model.generateContent(content).timeout(_requestTimeout);
     final text = response.text;
     if (text == null || text.trim().isEmpty) {
       throw Exception('Gemini returned an empty scope.');
     }
     return text.trim();
   }
+
   Future<String> auditInvoiceSummary(
     String totalHoursBilled,
     String clientContext,
@@ -118,15 +121,15 @@ mentioned.
         ),
       ])
     ];
-    final response = await _model
-        .generateContent(content)
-        .timeout(_requestTimeout);
+    final response =
+        await _model.generateContent(content).timeout(_requestTimeout);
     final text = response.text;
     if (text == null || text.trim().isEmpty) {
       throw Exception('Gemini returned an empty invoice summary.');
     }
     return text.trim();
   }
+
   Future<String> auditDashboardFinancials(String rawMetricsData) async {
     final trimmedMetrics = rawMetricsData.trim();
     if (trimmedMetrics.isEmpty) return '';
@@ -144,12 +147,12 @@ CRITICAL QUALITY CONTROL RULES:
         TextPart(trimmedMetrics),
       ])
     ];
-    final response = await _model
-        .generateContent(content)
-        .timeout(_requestTimeout);
+    final response =
+        await _model.generateContent(content).timeout(_requestTimeout);
     final textOutput = response.text;
     if (textOutput == null || textOutput.trim().isEmpty) {
-      throw Exception('Gemini returned an empty financial diagnostic statement string.');
+      throw Exception(
+          'Gemini returned an empty financial diagnostic statement string.');
     }
     return textOutput.trim();
   }

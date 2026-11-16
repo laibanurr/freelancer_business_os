@@ -8,28 +8,35 @@ import 'package:freelancer_business_os/providers/state_provider/theme_provider.d
 import 'package:freelancer_business_os/providers/stream_provider/client_stream_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/invoice_stream_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/project_stream_provider.dart';
+
 const _primaryIndigo = Color(0xFF4F46E5);
+
 class GenerateInvoiceScreen extends ConsumerStatefulWidget {
   const GenerateInvoiceScreen({super.key});
+
   @override
   ConsumerState<GenerateInvoiceScreen> createState() =>
       _GenerateInvoiceScreenState();
 }
+
 class _GenerateInvoiceScreenState
     extends ConsumerState<GenerateInvoiceScreen> {
   String? _selectedProjectId;
   bool _isAiAuditing = false;
   String _generatedBillingSummary = '';
+
   @override
   Widget build(BuildContext context) {
     final projectsAsync = ref.watch(projectsStreamProvider);
     final existingInvoicesAsync = ref.watch(invoicesStreamProvider);
     final clientsAsync = ref.watch(clientsStreamProvider);
+
     final isDarkMode = ref.watch(themeProvider);
     final backgroundColor =
         isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black87;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -69,6 +76,7 @@ class _GenerateInvoiceScreenState
             data: (projects) {
               final isIdValid =
                   projects.any((p) => p.id == _selectedProjectId);
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -99,7 +107,7 @@ class _GenerateInvoiceScreenState
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: _primaryIndigo,
                           width: 2.0,
                         ),
@@ -250,22 +258,26 @@ class _GenerateInvoiceScreenState
                                     .firstOrNull;
                                 final targetClientName =
                                     client?.name ?? 'Corporate Partner';
+
                                 final timeEntryRepo =
                                     ref.read(timeEntryRepositoryProvider);
                                 final allEntries = await timeEntryRepo
                                     .getTimeEntriesForProject(
                                   _selectedProjectId!,
                                 );
+
                                 final existingInvoices =
                                     existingInvoicesAsync.value ?? [];
                                 final alreadyBilledIds = existingInvoices
                                     .expand((inv) => inv.timeEntryIds)
                                     .toSet();
+
                                 final unBilled = allEntries
                                     .where((e) =>
                                         e.endTime != null &&
                                         !alreadyBilledIds.contains(e.id))
                                     .toList();
+
                                 if (!mounted) return;
                                 if (unBilled.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -278,7 +290,9 @@ class _GenerateInvoiceScreenState
                                   );
                                   return;
                                 }
-                                final totalHours = unBilled.fold<double>(
+
+                                
+                                double totalHours = unBilled.fold<double>(
                                   0.0,
                                   (total, e) =>
                                       total +
@@ -287,8 +301,30 @@ class _GenerateInvoiceScreenState
                                               .inMinutes /
                                           60.0,
                                 );
+
+                                
+                                
+                                if (totalHours < 0.1) {
+                                  totalHours = 0.1;
+                                }
+
+                                
                                 final totalCents =
                                     (totalHours * project.rateInCents).round();
+
+                                
+                                if (totalCents <= 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Cannot generate an invoice with \$0.00 billable amount.',
+                                      ),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 String finalBillSummary = '';
                                 try {
                                   finalBillSummary = await ref
@@ -297,15 +333,17 @@ class _GenerateInvoiceScreenState
                                         totalHours.toStringAsFixed(1),
                                         targetClientName,
                                       )
-                                      .timeout(const Duration(seconds: 4));
+                                      .timeout(const Duration(seconds: 25));
                                 } catch (_) {
                                   finalBillSummary =
                                       'Professional software engineering deliverables for ${project.projectName}. Total volume represents ${totalHours.toStringAsFixed(1)} operational hours allocated toward milestone integrations, system deployment, and quality assurance.';
                                 }
+
                                 if (!mounted) return;
                                 setState(() {
                                   _generatedBillingSummary = finalBillSummary;
                                 });
+
                                 final invoiceRepo =
                                     ref.read(invoiceRepositoryProvider);
                                 final newInvoice = Invoice(
@@ -318,7 +356,9 @@ class _GenerateInvoiceScreenState
                                   totalAmountInCents: totalCents,
                                   invoiceDescription: finalBillSummary,
                                 );
+
                                 await invoiceRepo.addInvoice(newInvoice);
+
                                 if (!mounted) return;
                                 Navigator.pop(context);
                               } catch (e) {

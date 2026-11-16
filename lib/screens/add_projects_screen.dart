@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,29 +6,39 @@ import 'package:freelancer_business_os/providers/repositories_provider/project_r
 import 'package:freelancer_business_os/providers/service_provider/ai_ser_provider.dart';
 import 'package:freelancer_business_os/providers/state_provider/theme_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/client_stream_provider.dart';
+
 const _primaryIndigo = Color(0xFF4F46E5);
+
 class AddProjectsScreen extends ConsumerStatefulWidget {
   final Project? projectToEdit;
   const AddProjectsScreen({
     super.key,
     this.projectToEdit,
   });
+
   @override
   ConsumerState<AddProjectsScreen> createState() => _AddProjectsScreenState();
 }
+
 class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _projectNameController = TextEditingController();
   final _projectRateController = TextEditingController();
   final _aiScopeInputController = TextEditingController();
+
   String? selectedClientId;
+  String _selectedStatus = 'active'; 
   bool _isAiScopeProcessing = false;
   bool _isSaving = false;
   String _aiGeneratedScopeText = '';
+
   bool get _isEditing => widget.projectToEdit != null;
+
   @override
   void initState() {
     super.initState();
+    _selectedStatus = widget.projectToEdit?.projectStatus ?? 'active';
+
     final project = widget.projectToEdit;
     if (project != null) {
       _projectNameController.text = project.projectName;
@@ -39,6 +48,7 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
       _aiGeneratedScopeText = project.projectDescription ?? '';
     }
   }
+
   @override
   void dispose() {
     _projectNameController.dispose();
@@ -46,10 +56,13 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
     _aiScopeInputController.dispose();
     super.dispose();
   }
+
   Future<void> _runAiScopeBuilder(String rawInput) async {
     final input = rawInput.trim();
     if (input.isEmpty || _isAiScopeProcessing) return;
+
     setState(() => _isAiScopeProcessing = true);
+
     try {
       final aiService = ref.read(aiServiceProvider);
       final generatedScope = await aiService.generateProjectScope(
@@ -61,10 +74,13 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
             ? _projectRateController.text.trim()
             : null,
       );
+
       if (!mounted) return;
+
       setState(() {
         _aiGeneratedScopeText = generatedScope;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Project scope specifications compiled with AI.'),
@@ -74,12 +90,15 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
       );
     } catch (e) {
       debugPrint('Gemini failed or unavailable; using local generator: $e');
+
       if (!mounted) return;
+
       final summary = input
           .split(RegExp(r'\s+'))
           .where((word) => word.isNotEmpty)
           .take(12)
           .join(' ');
+
       final fallbackScope = [
         'Project Scope Overview:',
         '- Core objective: ${summary.isNotEmpty ? summary : "General project delivery"}',
@@ -88,9 +107,11 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
         '- Timeline: Establish milestones, baseline review, and final handoff checkpoints.',
         '- Risk controls: Track change requests, maintain client feedback loops, and record signoff milestones.',
       ].join('\n');
+
       setState(() {
         _aiGeneratedScopeText = fallbackScope;
       });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Contract specifications compiled successfully.'),
@@ -104,23 +125,25 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
       }
     }
   }
+
   Future<void> _saveProject() async {
     if (_isSaving || !(_formKey.currentState?.validate() ?? false)) {
       return;
     }
+
     setState(() => _isSaving = true);
     FocusScope.of(context).unfocus();
+
     try {
       final repository = ref.read(projectRepositoryProvider);
       final existingProject = widget.projectToEdit;
       final rateDollars = double.parse(_projectRateController.text.trim());
-      final projectId = existingProject?.id ??
-          FirebaseFirestore.instance.collection('projects').doc().id;
+
       final project = Project(
-        id: projectId,
+        id: existingProject?.id ?? repository.newProjectId(),
         clientId: selectedClientId!,
         projectName: _projectNameController.text.trim(),
-        projectStatus: existingProject?.projectStatus ?? 'active',
+        projectStatus: _selectedStatus, 
         rateInCents: (rateDollars * 100).round(),
         startDate: existingProject?.startDate ?? DateTime.now(),
         endDate: existingProject?.endDate,
@@ -128,11 +151,13 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
             ? 'Standard freelance project contract initialized.'
             : _aiGeneratedScopeText,
       );
+
       if (existingProject == null) {
         await repository.addProject(project);
       } else {
         await repository.updateProject(project);
       }
+
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (dbError) {
@@ -150,14 +175,17 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final clientAsync = ref.watch(clientsStreamProvider);
     final isDarkMode = ref.watch(themeProvider);
+
     final backgroundColor =
         isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black87;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -189,6 +217,7 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -275,7 +304,7 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                             ),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          focusedBorder:  OutlineInputBorder(
+                          focusedBorder: OutlineInputBorder(
                             borderSide: BorderSide(
                               color: _primaryIndigo,
                               width: 1.5,
@@ -321,6 +350,8 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                
                 clientAsync.when(
                   loading: () => const Center(
                     child: CircularProgressIndicator(color: _primaryIndigo),
@@ -332,6 +363,7 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                   data: (clients) {
                     final isIdValid =
                         clients.any((c) => c.id == selectedClientId);
+
                     return DropdownButtonFormField<String>(
                       dropdownColor: cardColor,
                       style: TextStyle(color: textColor),
@@ -358,8 +390,8 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        focusedBorder:  OutlineInputBorder(
-                          borderSide: BorderSide(
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(
                             color: _primaryIndigo,
                             width: 2.0,
                           ),
@@ -384,6 +416,8 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+
+                
                 CustomTextField(
                   controller: _projectNameController,
                   label: 'Project Name',
@@ -395,6 +429,50 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                       : null,
                 ),
                 const SizedBox(height: 16),
+
+                
+                DropdownButtonFormField<String>(
+                  dropdownColor: cardColor,
+                  style: TextStyle(color: textColor),
+                  initialValue: _selectedStatus,
+                  decoration: InputDecoration(
+                    labelText: 'Engagement Status',
+                    labelStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                    floatingLabelStyle: const TextStyle(color: _primaryIndigo),
+                    filled: true,
+                    fillColor: cardColor,
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder:  OutlineInputBorder(
+                      borderSide: BorderSide(color: _primaryIndigo, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'active',
+                      child: Text('Active Production'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'completed',
+                      child: Text('Completed & Delivered'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'on_hold',
+                      child: Text('On Hold / Paused'),
+                    ),
+                  ],
+                  onChanged: (val) =>
+                      setState(() => _selectedStatus = val ?? 'active'),
+                ),
+                const SizedBox(height: 16),
+
+                
                 CustomTextField(
                   controller: _projectRateController,
                   label: 'Hourly Billing Rate (\$)',
@@ -410,6 +488,8 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
                       : null,
                 ),
                 const SizedBox(height: 32),
+
+                
                 ElevatedButton(
                   onPressed: _isSaving ? null : _saveProject,
                   style: ElevatedButton.styleFrom(
@@ -446,6 +526,7 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
     );
   }
 }
+
 class CustomTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -454,6 +535,7 @@ class CustomTextField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final TextInputAction textInputAction;
   final bool isDark;
+
   const CustomTextField({
     super.key,
     required this.controller,
@@ -464,6 +546,7 @@ class CustomTextField extends StatelessWidget {
     required this.textInputAction,
     required this.isDark,
   });
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -492,7 +575,7 @@ class CustomTextField extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(12),
           ),
-          focusedBorder:  OutlineInputBorder(
+          focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(color: _primaryIndigo, width: 2.0),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -500,7 +583,7 @@ class CustomTextField extends StatelessWidget {
             borderSide: BorderSide(color: Colors.redAccent, width: 1.0),
             borderRadius: BorderRadius.circular(12),
           ),
-          focusedErrorBorder: OutlineInputBorder(
+          focusedErrorBorder:OutlineInputBorder(
             borderSide: BorderSide(color: Colors.redAccent, width: 2.0),
             borderRadius: BorderRadius.circular(12),
           ),

@@ -6,15 +6,20 @@ import 'package:freelancer_business_os/providers/state_provider/theme_provider.d
 import 'package:freelancer_business_os/providers/stream_provider/client_stream_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/project_stream_provider.dart';
 import 'package:freelancer_business_os/screens/add_projects_screen.dart';
-import 'package:freelancer_business_os/screens/time_entries_screen.dart'; 
+import 'package:freelancer_business_os/screens/time_entries_screen.dart';
+
 const _primaryIndigo = Color(0xFF4F46E5);
+
 class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
+
   @override
   ConsumerState<ProjectsScreen> createState() => _ProjectsScreenState();
 }
+
 class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   final Set<String> _expandedProjectIds = {};
+
   void _toggleExpanded(String projectId) {
     setState(() {
       if (_expandedProjectIds.contains(projectId)) {
@@ -24,6 +29,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       }
     });
   }
+
   Future<void> _confirmDeleteProject(Project project) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
@@ -48,7 +54,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         ],
       ),
     );
+
     if (shouldDelete != true) return;
+
     try {
       await ref.read(projectRepositoryProvider).deleteProject(project.id);
       if (!mounted) return;
@@ -66,6 +74,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       );
     }
   }
+
   void _openEditProject(Project project) {
     Navigator.push(
       context,
@@ -74,6 +83,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       ),
     );
   }
+
   void _openTrackTime(Project project) {
     Navigator.push(
       context,
@@ -82,21 +92,25 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final projectsAsync = ref.watch(projectsStreamProvider);
     final clientsAsync = ref.watch(clientsStreamProvider);
     final isDark = ref.watch(themeProvider);
+
     final backgroundColor =
         isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
+
     final Map<String, String> clientMap = {};
     clientsAsync.whenData((clients) {
       for (final client in clients) {
         clientMap[client.id] = client.name;
       }
     });
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -117,9 +131,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const AddProjectsScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const AddProjectsScreen()),
           );
         },
         backgroundColor: _primaryIndigo,
@@ -171,6 +183,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               ),
             );
           }
+
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
             itemCount: projects.length,
@@ -178,11 +191,20 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             itemBuilder: (context, index) {
               final project = projects[index];
               final isExpanded = _expandedProjectIds.contains(project.id);
-              final clientName = clientMap[project.clientId] ?? 'Client Account';
+              final clientName = clientMap[project.clientId] ??
+               'Client Account';
               final rateFormatted =
                   '\$${(project.rateInCents / 100).toStringAsFixed(2)}/hr';
               final hasDescription = project.projectDescription != null &&
                   project.projectDescription!.trim().isNotEmpty;
+
+              
+              final (statusBg, statusText) = switch (project.projectStatus.toLowerCase()) {
+                'completed' => (const Color(0xFF4F46E5).withValues(alpha: 0.1), const Color(0xFF4F46E5)),
+                'on_hold' || 'paused' => (Colors.amber.withValues(alpha: 0.12), Colors.amber.shade800),
+                _ => (const Color(0xFF10B981).withValues(alpha: 0.1), const Color(0xFF10B981)),
+              };
+
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
@@ -204,12 +226,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       child: Row(
                         children: [
+                          
                           Container(
-                            height: 48,
-                            width: 48,
+                            height: 46,
+                            width: 46,
                             decoration: BoxDecoration(
                               color: _primaryIndigo.withValues(alpha: 0.08),
                               shape: BoxShape.circle,
@@ -225,7 +248,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
+
+                          
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +287,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 6),
                                 Row(
                                   children: [
                                     Text(
@@ -280,14 +305,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color:
-                                            Colors.green.withValues(alpha: 0.1),
+                                        color: statusBg,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
                                         project.projectStatus.toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.green,
+                                        style: TextStyle(
+                                          color: statusText,
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -298,53 +322,100 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               ],
                             ),
                           ),
-                          IconButton(
-                            tooltip: 'Track time for this project',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _openTrackTime(project),
-                            icon: const Icon(
-                              Icons.timer_outlined,
+
+                          
+                          PopupMenuButton<String>(
+                            tooltip: 'Project actions',
+                            icon: Icon(
+                              Icons.more_vert_rounded,
+                              color: isDark ? Colors.white70 : Colors.grey.shade700,
                               size: 20,
-                              color: _primaryIndigo,
                             ),
-                          ),
-                          IconButton(
-                            tooltip: 'Edit project',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _openEditProject(project),
-                            icon: const Icon(
-                              Icons.edit_outlined,
-                              size: 20,
-                              color: Colors.blueGrey,
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'Delete project',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => _confirmDeleteProject(project),
-                            icon: const Icon(
-                              Icons.delete_outline,
-                              size: 20,
-                              color: Colors.redAccent,
-                            ),
-                          ),
-                          if (hasDescription)
-                            IconButton(
-                              tooltip: isExpanded
-                                  ? 'Hide contract'
-                                  : 'View contract roadmap',
-                              visualDensity: VisualDensity.compact,
-                              onPressed: () => _toggleExpanded(project.id),
-                              icon: Icon(
-                                isExpanded
-                                    ? Icons.keyboard_arrow_up_rounded
-                                    : Icons.keyboard_arrow_down_rounded,
-                                color: Colors.grey,
+                            color: cardColor,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              side: BorderSide(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.15),
                               ),
                             ),
+                            onSelected: (action) {
+                              switch (action) {
+                                case 'track':
+                                  _openTrackTime(project);
+                                  break;
+                                case 'edit':
+                                  _openEditProject(project);
+                                  break;
+                                case 'specs':
+                                  _toggleExpanded(project.id);
+                                  break;
+                                case 'delete':
+                                  _confirmDeleteProject(project);
+                                  break;
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'track',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.timer_outlined, size: 18, color: _primaryIndigo),
+                                    SizedBox(width: 10),
+                                    Text('Track Time', style: TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_outlined, size: 18, color: Colors.blueGrey),
+                                    SizedBox(width: 10),
+                                    Text('Edit Project', style: TextStyle(fontSize: 14)),
+                                  ],
+                                ),
+                              ),
+                              if (hasDescription)
+                                PopupMenuItem(
+                                  value: 'specs',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        isExpanded
+                                            ? Icons.visibility_off_outlined
+                                            : Icons.auto_awesome,
+                                        size: 18,
+                                        color: Colors.amber.shade700,
+                                      ),
+                                      SizedBox(width: 10),
+                                      Text(isExpanded ? 'Hide Specs' : 'View Specs',
+                                          style: const TextStyle(fontSize: 14)),
+                                    ],
+                                  ),
+                                ),
+                              const PopupMenuDivider(),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_outline_rounded,
+                                        size: 18, color: Colors.redAccent),
+                                    SizedBox(width: 10),
+                                    Text('Delete Project',
+                                        style: TextStyle(
+                                            fontSize: 14, color: Colors.redAccent)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
+
+                    
                     if (isExpanded && hasDescription) ...[
                       const Divider(height: 1),
                       Container(
@@ -364,11 +435,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                           children: [
                             const Row(
                               children: [
-                                Icon(
-                                  Icons.auto_awesome,
-                                  size: 14,
-                                  color: _primaryIndigo,
-                                ),
+                                Icon(Icons.auto_awesome, size: 14, color: _primaryIndigo),
                                 SizedBox(width: 6),
                                 Text(
                                   'CONTRACT & SCOPE SPECIFICATIONS',

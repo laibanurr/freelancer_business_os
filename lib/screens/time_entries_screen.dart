@@ -8,6 +8,8 @@ import 'package:freelancer_business_os/providers/repositories_provider/time_entr
 import 'package:freelancer_business_os/providers/service_provider/ai_ser_provider.dart';
 import 'package:freelancer_business_os/providers/state_provider/theme_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/entries_for_project_provider.dart';
+
+
 const _primaryIndigo = Color(0xFF4F46E5);
 class TimeEntriesScreen extends ConsumerStatefulWidget {
   final Project project;
@@ -59,7 +61,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
       summary = await aiService.auditInvoiceSummary(
         hoursString,
         'Project: ${widget.project.projectName}. ${widget.project.projectDescription ?? ""}',
-      ).timeout(const Duration(seconds: 4));
+      ).timeout(const Duration(seconds: 25));
     } catch (e) {
       debugPrint('Gemini timed out or blocked; utilizing smart local template: $e');
       usedFallback = true;

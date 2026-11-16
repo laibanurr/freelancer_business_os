@@ -4,9 +4,12 @@ import 'package:freelancer_business_os/models/client.dart';
 import 'package:freelancer_business_os/providers/repositories_provider/client_repo_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/client_stream_provider.dart';
 import 'package:freelancer_business_os/screens/add_clients_screen.dart';
+
 const _primaryIndigo = Color(0xFF4F46E5);
+
 class ClientsScreen extends ConsumerWidget {
   const ClientsScreen({super.key});
+
   Future<void> _confirmDeleteClient(
     BuildContext context,
     WidgetRef ref,
@@ -18,7 +21,7 @@ class ClientsScreen extends ConsumerWidget {
         title: const Text('Delete client?'),
         content: Text(
           'Are you sure you want to delete ${client.name}? '
-          'Related projects, time entries, and invoices will remain.',
+          'Related projects, time entries, and invoices will remain intact.',
         ),
         actions: [
           TextButton(
@@ -35,7 +38,9 @@ class ClientsScreen extends ConsumerWidget {
         ],
       ),
     );
+
     if (shouldDelete != true) return;
+
     try {
       await ref.read(clientRepositoryProvider).deleteClient(client.id);
       if (!context.mounted) return;
@@ -53,6 +58,7 @@ class ClientsScreen extends ConsumerWidget {
       );
     }
   }
+
   void _openEditClient(BuildContext context, Client client) {
     Navigator.push(
       context,
@@ -61,16 +67,17 @@ class ClientsScreen extends ConsumerWidget {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clientAsync = ref.watch(clientsStreamProvider);
-    
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final backgroundColor =
         isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final cardColor =
-        isDark ? const Color(0xFF1E293B) : Colors.white;
+    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
@@ -91,9 +98,7 @@ class ClientsScreen extends ConsumerWidget {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const AddClientsScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const AddClientsScreen()),
           );
         },
         backgroundColor: _primaryIndigo,
@@ -145,21 +150,20 @@ class ClientsScreen extends ConsumerWidget {
               ),
             );
           }
+
           return ListView.separated(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
             itemCount: clients.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: 14),
+            separatorBuilder: (_, __) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               final client = clients[index];
-              
               final company = client.companyName?.trim();
-              final companyLabel =
-                  company == null || company.isEmpty
-                      ? 'Independent Freelancer'
-                      : company;
+              final companyLabel = (company == null || company.isEmpty)
+                  ? 'Independent Client'
+                  : company;
+
               return Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: cardColor,
                   borderRadius: BorderRadius.circular(16),
@@ -178,7 +182,7 @@ class ClientsScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    
+                    // Client Avatar Badge
                     Container(
                       height: 48,
                       width: 48,
@@ -200,8 +204,9 @@ class ClientsScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    
+                    const SizedBox(width: 14),
+
+                    // Client Name + Company
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,10 +226,10 @@ class ClientsScreen extends ConsumerWidget {
                             children: [
                               const Icon(
                                 Icons.business_center_outlined,
-                                size: 15,
+                                size: 14,
                                 color: Colors.grey,
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   companyLabel,
@@ -241,32 +246,57 @@ class ClientsScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    
-                    IconButton(
-                      tooltip: 'Edit client',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () =>
-                          _openEditClient(context, client),
-                      icon: const Icon(
-                        Icons.edit_outlined,
+
+                    // 💎 CLEAN 3-DOTS POPUP MENU:
+                    PopupMenuButton<String>(
+                      tooltip: 'Client actions',
+                      icon: Icon(
+                        Icons.more_vert_rounded,
+                        color: isDark ? Colors.white70 : Colors.grey.shade700,
                         size: 20,
-                        color: _primaryIndigo,
                       ),
-                    ),
-                    
-                    IconButton(
-                      tooltip: 'Delete client',
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => _confirmDeleteClient(
-                        context,
-                        ref,
-                        client,
+                      color: cardColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.grey.withValues(alpha: 0.15),
+                        ),
                       ),
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        size: 20,
-                        color: Colors.redAccent,
-                      ),
+                      onSelected: (action) {
+                        if (action == 'edit') {
+                          _openEditClient(context, client);
+                        } else if (action == 'delete') {
+                          _confirmDeleteClient(context, ref, client);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_outlined, size: 18, color: _primaryIndigo),
+                              SizedBox(width: 10),
+                              Text('Edit Client', style: TextStyle(fontSize: 14)),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete_outline_rounded,
+                                  size: 18, color: Colors.redAccent),
+                              SizedBox(width: 10),
+                              Text('Delete Client',
+                                  style: TextStyle(
+                                      fontSize: 14, color: Colors.redAccent)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -274,37 +304,23 @@ class ClientsScreen extends ConsumerWidget {
             },
           );
         },
-        error: (error, stackTrace) {
-          debugPrint('Failed to load clients: $error');
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Could not load clients. Please try again.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.redAccent),
-              ),
-            ),
-          );
-        },
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: _primaryIndigo,
+        error: (error, stackTrace) => Center(
+          child: Text(
+            'Could not load clients: $error',
+            style: const TextStyle(color: Colors.redAccent),
           ),
+        ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: _primaryIndigo),
         ),
       ),
     );
   }
 }
+
 String _getInitials(String name) {
-  final parts = name
-      .trim()
-      .split(RegExp(r'\s+'))
-      .where((part) => part.isNotEmpty)
-      .toList();
+  final parts = name.trim().split(RegExp(r'\s+')).where((part) => part.isNotEmpty).toList();
   if (parts.isEmpty) return '?';
-  if (parts.length >= 2) {
-    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-  }
+  if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   return parts.first[0].toUpperCase();
 }

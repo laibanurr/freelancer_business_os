@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freelancer_business_os/providers/repositories_provider/client_repo_provider.dart';
 import 'package:freelancer_business_os/providers/state_provider/theme_provider.dart';
 import 'package:freelancer_business_os/screens/sign_up_screen.dart';
+import 'package:freelancer_business_os/widgets/app_brand_logo.dart';
 
 const _primaryIndigo = Color(0xFF4F46E5);
 
@@ -97,19 +98,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _primaryIndigo.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome,
-                        size: 32,
-                        color: _primaryIndigo,
-                      ),
+                  
+                      child: AppBrandLogo(size: 72,)
                     ),
-                  ),
+                  
                   const SizedBox(height: 24),
                   Text(
                     'Welcome back',
