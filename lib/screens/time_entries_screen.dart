@@ -9,8 +9,8 @@ import 'package:freelancer_business_os/providers/service_provider/ai_ser_provide
 import 'package:freelancer_business_os/providers/state_provider/theme_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/entries_for_project_provider.dart';
 
-
 const _primaryIndigo = Color(0xFF4F46E5);
+
 class TimeEntriesScreen extends ConsumerStatefulWidget {
   final Project project;
   const TimeEntriesScreen({
@@ -20,6 +20,7 @@ class TimeEntriesScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<TimeEntriesScreen> createState() => _TimeEntriesScreenState();
 }
+
 class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
   Timer? _ticker;
   bool _isProcessingAction = false;
@@ -28,6 +29,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
     _ticker?.cancel();
     super.dispose();
   }
+
   void _ensureTicking(bool shouldTick) {
     if (shouldTick && _ticker == null) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -38,6 +40,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
       _ticker = null;
     }
   }
+
   String _formatDuration(Duration d) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final hours = twoDigits(d.inHours);
@@ -45,6 +48,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
     final seconds = twoDigits(d.inSeconds.remainder(60));
     return '$hours:$minutes:$seconds';
   }
+
   Future<void> _generateAiWorkSummary(double hoursLogged) async {
     showDialog(
       context: context,
@@ -58,12 +62,15 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
     try {
       final aiService = ref.read(aiServiceProvider);
       final hoursString = hoursLogged.toStringAsFixed(1);
-      summary = await aiService.auditInvoiceSummary(
-        hoursString,
-        'Project: ${widget.project.projectName}. ${widget.project.projectDescription ?? ""}',
-      ).timeout(const Duration(seconds: 25));
+      summary = await aiService
+          .auditInvoiceSummary(
+            hoursString,
+            'Project: ${widget.project.projectName}. ${widget.project.projectDescription ?? ""}',
+          )
+          .timeout(const Duration(seconds: 6));
     } catch (e) {
-      debugPrint('Gemini timed out or blocked; utilizing smart local template: $e');
+      debugPrint(
+          'Gemini timed out or blocked; utilizing smart local template: $e');
       usedFallback = true;
       final hoursStr = hoursLogged.toStringAsFixed(1);
       final projectName = widget.project.projectName;
@@ -71,7 +78,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
           'milestone delivery, architecture implementation, and quality assurance testing.';
     }
     if (!mounted) return;
-    Navigator.pop(context); 
+    Navigator.pop(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -81,7 +88,9 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
             const Icon(Icons.auto_awesome, color: _primaryIndigo, size: 20),
             const SizedBox(width: 8),
             Text(
-              usedFallback ? 'Invoice Line Item (Template)' : 'AI Invoice Line Item',
+              usedFallback
+                  ? 'Invoice Line Item (Template)'
+                  : 'AI Invoice Line Item',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ],
@@ -102,7 +111,8 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
               decoration: BoxDecoration(
                 color: _primaryIndigo.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _primaryIndigo.withValues(alpha: 0.15)),
+                border:
+                    Border.all(color: _primaryIndigo.withValues(alpha: 0.15)),
               ),
               child: Text(
                 summary,
@@ -137,6 +147,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final entriesAsync =
@@ -191,8 +202,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
               _ensureTicking(runningEntry != null);
             }
           });
-          final pastEntries =
-              entries.where((e) => e.endTime != null).toList();
+          final pastEntries = entries.where((e) => e.endTime != null).toList();
           final isTimerRunning = runningEntry != null;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -220,8 +230,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
                           ? 'ACTIVE TRACKING SESSION'
                           : 'TIMER DISENGAGED',
                       style: TextStyle(
-                        color:
-                            isTimerRunning ? _primaryIndigo : Colors.grey,
+                        color: isTimerRunning ? _primaryIndigo : Colors.grey,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
@@ -271,7 +280,8 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('Error updating timer: $e'),
+                                        content:
+                                            Text('Error updating timer: $e'),
                                         backgroundColor: Colors.redAccent,
                                       ),
                                     );
@@ -327,8 +337,8 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0, vertical: 8.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                 child: Text(
                   'Completed Sessions History',
                   style: TextStyle(
@@ -352,8 +362,7 @@ class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.only(
                             left: 20, right: 20, top: 8, bottom: 24),
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: 12),
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
                         itemCount: pastEntries.length,
                         itemBuilder: (context, index) {
                           final entry = pastEntries[index];

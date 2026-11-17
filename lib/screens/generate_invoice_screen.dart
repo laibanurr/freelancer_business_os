@@ -8,6 +8,7 @@ import 'package:freelancer_business_os/providers/state_provider/theme_provider.d
 import 'package:freelancer_business_os/providers/stream_provider/client_stream_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/invoice_stream_provider.dart';
 import 'package:freelancer_business_os/providers/stream_provider/project_stream_provider.dart';
+import 'package:freelancer_business_os/screens/invoice_detailed_screen.dart';
 
 const _primaryIndigo = Color(0xFF4F46E5);
 
@@ -357,10 +358,18 @@ class _GenerateInvoiceScreenState
                                   invoiceDescription: finalBillSummary,
                                 );
 
-                                await invoiceRepo.addInvoice(newInvoice);
+                               
+await invoiceRepo.addInvoice(newInvoice);
 
-                                if (!mounted) return;
-                                Navigator.pop(context);
+if (!mounted) return;
+
+
+Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => InvoiceDetailedScreen(invoice: newInvoice),
+  ),
+);
                               } catch (e) {
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(

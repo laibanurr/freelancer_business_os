@@ -66,12 +66,11 @@ Use the metrics above to answer the user's inquiry accurately. Be concise, pract
       final aiService = _ref.read(aiServiceProvider);
       replyText = await aiService
           .auditDashboardFinancials(fullPrompt)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 8));
     } catch (e) {
       debugPrint('ℹ️ Cloud AI bypassed or blocked on localhost: $e');
       replyText = _generateSmartFallback(trimmed, contextSnapshot, userName);
     }
-    await Future.delayed(const Duration(milliseconds: 600));
     state = state.copyWith(
       messages: [
         ...state.messages,

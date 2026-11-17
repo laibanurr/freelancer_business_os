@@ -81,13 +81,8 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
         _aiGeneratedScopeText = generatedScope;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Project scope specifications compiled with AI.'),
-          backgroundColor: _primaryIndigo,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+     
+  
     } catch (e) {
       debugPrint('Gemini failed or unavailable; using local generator: $e');
 
@@ -112,13 +107,7 @@ class _AddProjectsScreenState extends ConsumerState<AddProjectsScreen> {
         _aiGeneratedScopeText = fallbackScope;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Contract specifications compiled successfully.'),
-          backgroundColor: _primaryIndigo,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      
     } finally {
       if (mounted) {
         setState(() => _isAiScopeProcessing = false);
