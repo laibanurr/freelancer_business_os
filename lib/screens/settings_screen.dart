@@ -216,14 +216,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final auth = ref.read(authProvider);
 
       try {
-        // Attempt immediate deletion
+        
         await auth.currentUser?.delete();
-        // AuthGate automatically redirects to LoginScreen!
+        
       } catch (e) {
         if (!mounted) return;
 
-        // 🛡️ SECURITY HANDOFF:
-        // If Firebase requires a fresh login, explain and log them out!
+        
+        
         await showDialog(
           context: context,
           builder: (dialogCtx) => AlertDialog(
@@ -236,7 +236,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ElevatedButton(
                 onPressed: () async {
                   Navigator.pop(dialogCtx);
-                  await auth.signOut(); // 👈 Signs out and returns to LoginScreen!
+                  await auth.signOut(); 
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primaryIndigo,
@@ -303,7 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // PROFILE AVATAR
+                  
                   GestureDetector(
                     onTap: _pickProfileImageFromGallery,
                     child: Center(
@@ -363,7 +363,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 28),
 
-                  // GROUP 1: ACCOUNT
+                  
                   _buildSectionHeader('ACCOUNT', textSubColor),
                   _buildCardContainer(
                     cardColor,
@@ -402,7 +402,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 24),
 
-                  // GROUP 2: PREFERENCES
+                  
                   _buildSectionHeader('PREFERENCES', textSubColor),
                   _buildCardContainer(
                     cardColor,
@@ -466,7 +466,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 24),
 
-                  // GROUP 3: ABOUT & SESSIONS (With Luxury Rose)
+                  
                   _buildSectionHeader('ABOUT & SESSIONS', textSubColor),
                   _buildCardContainer(
                     cardColor,
