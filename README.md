@@ -21,7 +21,10 @@
 ## 📱 App Demo
 
 
-https://github.com/user-attachments/assets/7a02e796-9622-4b13-af8b-cfcd86daa19c
+
+
+https://github.com/user-attachments/assets/dd734dcb-e49d-42f1-afc8-d8dedebaffdc
+
 
 
 
